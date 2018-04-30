@@ -69,31 +69,27 @@ update msg model =
 
         UpdateHours id hours ->
             let
-                updateHours index item =
+                updateHours item =
                     if (item.id == id) then
                         { item | hours = (String.toInt hours |> Result.toMaybe |> Maybe.withDefault 0) }
                     else
                         item
 
                 items =
-                    List.indexedMap updateHours model.items
+                    List.map updateHours model.items
             in
                 ( { model | items = items }, Cmd.none )
 
         UpdateDescription id description ->
             let
-                updateDescription index item =
+                updateDescription item =
                     if (item.id == id) then
-                        let
-                            _ =
-                                toString id |> Debug.log
-                        in
-                            { item | description = description }
+                        { item | description = description }
                     else
                         item
 
                 items =
-                    List.indexedMap updateDescription model.items
+                    List.map updateDescription model.items
             in
                 ( { model | items = items }, Cmd.none )
 
