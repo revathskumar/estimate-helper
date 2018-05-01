@@ -4,26 +4,15 @@ import Html exposing (Html, text, div, label, input, p, section, span, i, a, but
 import Html.Attributes exposing (src, class, type_, value)
 import Html.Events exposing (onClick, onInput, on)
 import Task
+import List.Extra
+import Item
 
 
 ---- MODEL ----
 
 
-type alias Item =
-    { description : String
-    , hours : Int
-    , id : Int
-    , checked : Bool
-    }
-
-
-initItem : Item
-initItem =
-    { checked = False, description = "", id = 1, hours = 0 }
-
-
 type alias Model =
-    { items : List Item, nextId : Int }
+    { items : List Item.Item, nextId : Int }
 
 
 init : ( Model, Cmd Msg )
@@ -42,9 +31,7 @@ init =
 
 type Msg
     = AddItem String
-    | RemoveItem Int
-    | UpdateHours Int String
-    | UpdateDescription Int String
+    | ItemAction Int Item.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -52,6 +39,9 @@ update msg model =
     case msg of
         AddItem description ->
             let
+                initItem =
+                    Item.initItem
+
                 newItem =
                     { initItem | id = model.nextId, description = description }
 
@@ -60,87 +50,64 @@ update msg model =
             in
                 ( { model | items = (List.append model.items [ newItem ]), nextId = nextId }, Cmd.none )
 
-        RemoveItem id ->
-            let
-                items =
-                    List.filter (\item -> item.id /= id) model.items
-            in
-                ( { model | items = items }, Cmd.none )
+        ItemAction id childAction ->
+            case childAction of
+                Item.RemoveItem id ->
+                    let
+                        items =
+                            List.filter (\item -> item.id /= id) model.items
+                    in
+                        ( { model | items = items }, Cmd.none )
 
-        UpdateHours id hours ->
-            let
-                updateHours item =
-                    if (item.id == id) then
-                        { item | hours = (String.toInt hours |> Result.toMaybe |> Maybe.withDefault 0) }
-                    else
-                        item
+                _ ->
+                    let
+                        index =
+                            case (List.Extra.findIndex (\item -> item.id == id) model.items) of
+                                Just index ->
+                                    index
 
-                items =
-                    List.map updateHours model.items
-            in
-                ( { model | items = items }, Cmd.none )
+                                Nothing ->
+                                    -1
 
-        UpdateDescription id description ->
-            let
-                updateDescription item =
-                    if (item.id == id) then
-                        { item | description = description }
-                    else
-                        item
+                        selectedItem =
+                            case (List.Extra.getAt index model.items) of
+                                Just item ->
+                                    item
 
-                items =
-                    List.map updateDescription model.items
-            in
-                ( { model | items = items }, Cmd.none )
+                                Nothing ->
+                                    Item.initItem
+
+                        ( updatedItem, cmdMsg ) =
+                            Item.update childAction selectedItem
+
+                        items =
+                            List.Extra.setAt index updatedItem model.items
+                    in
+                        ( { model | items = items }, Cmd.map (ItemAction id) cmdMsg )
 
 
 
 ---- VIEW ----
 
 
-viewItem : Item -> Html Msg
-viewItem item =
-    div [ class "panel-block" ]
-        [ div [ class "columns" ]
-            [ -- div [ class "column" ]
-              -- [ label [ class "checkbox" ]
-              --     [ input [ type_ "checkbox" ] []
-              --     ]
-              -- ]
-              -- ,
-              div [ class "column" ]
-                [ input [ type_ "text", value item.description, onInput (UpdateDescription item.id) ] []
-                ]
-            , div [ class "column" ]
-                [ input [ type_ "number", toString item.hours |> value, onInput (UpdateHours item.id) ] []
-                ]
-            , a [ class "column", onClick (RemoveItem item.id) ]
-                [ span [ class "panel-icon" ]
-                    [ i [ class "fas fa-minus-circle" ] []
-                    ]
-                ]
-            ]
-        ]
-
-
 view : Model -> Html Msg
 view model =
     div []
         [ section [ class "section" ]
-            [ div [ class "container" ]
+            [ div [ class "container " ]
                 [ div [ class "has-text-right" ] [ button [ class "button is-primary", onClick (AddItem "") ] [ text "Add Item" ] ]
                 , div [ class "panel" ]
                     [ p [ class "panel-heading" ] [ text "Items" ]
                     , div []
                         (if (List.length model.items) > 0 then
-                            (List.map viewItem model.items)
+                            (List.map (\item -> Html.map (ItemAction item.id) (Item.view item)) model.items)
                          else
                             [ text "No Items to show" ]
                         )
                     , div [ class "panel-block" ]
-                        [ div [ class "columns has-text-right" ]
-                            [ div [ class "column" ] [ text "Total Hours" ]
-                            , div [ class "column" ] [ ((List.map .hours model.items) |> List.foldr (+) 0) |> toString |> text ]
+                        [ div [ class "columns" ]
+                            [ div [ class "column is-four-fifths" ] [ text "Total Hours" ]
+                            , div [ class "column is-one-fifths" ] [ ((List.map .hours model.items) |> List.foldr (+) 0) |> toString |> text ]
                             ]
                         ]
                     ]
