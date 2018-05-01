@@ -1,8 +1,10 @@
 image: codesimple/elm:0.18
 
 before_script:
-  - npm install
-  - elm package install
+  - npm install elm
+  - npm install create-elm-app
+  - npx create-elm-app package install
+  - npx create-elm-app install
 
 cache:
   paths:
@@ -10,7 +12,7 @@ cache:
 
 pages:
   script:
-    - npm run build
+    - npx create-elm-app build
   artifacts:
     paths:
       - build
