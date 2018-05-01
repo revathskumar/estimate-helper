@@ -1,4 +1,0 @@
-[submodule "build"]
-	path = build
-	url = git@github.com:revathskumar/estimate-helper.git
-	branch = gh-pages
