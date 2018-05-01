@@ -2,7 +2,7 @@ image: node
 
 before_script:
   - npm install -g create-elm-app
-  - npm install
+  - elm-app package install
 
 cache:
   paths:
