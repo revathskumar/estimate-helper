@@ -1,6 +1,7 @@
 image: node
 
 before_script:
+  - npm install elm
   - npm install create-elm-app
   - npx create-elm-app package install
   - npx create-elm-app install
