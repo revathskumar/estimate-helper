@@ -2,11 +2,19 @@ import './main.css';
 import {Main} from './Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
-const estimateHelperApp = Main.embed (document.getElementById ('root'));
+let initData = {};
+if (window.localStorage) {
+  const data = JSON.parse (localStorage.getItem ('estimate-helper') || '{}');
+  const id = Object.keys (data)[0];
+  initData = data[id] || {items: [], hoursPerDay: 8, id: 0, nextId: 2};
+}
+
+const estimateHelperApp = Main.embed (document.getElementById ('root'), {
+  initData,
+});
 
 estimateHelperApp.ports.saveEstimate.subscribe (estimate => {
   if (window.localStorage) {
-    console.log (estimate);
     try {
       const data = JSON.parse (localStorage.getItem ('estimate-helper')) || {};
       data[estimate.id] = estimate;

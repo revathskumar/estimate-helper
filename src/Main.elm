@@ -19,6 +19,10 @@ type NotificationType
     | Success
 
 
+type alias Flags =
+    { initData : { items : List Item.Item, nextId : Int, hoursPerDay : Int, id : Int } }
+
+
 type alias Notification =
     { type_ : NotificationType, message : String }
 
@@ -27,16 +31,28 @@ type alias Model =
     { items : List Item.Item, nextId : Int, hoursPerDay : Int, id : Int, notification : Notification }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { items = [], nextId = 2, hoursPerDay = 8, id = 0, notification = { type_ = Success, message = "" } }
-    , Cmd.batch
-        [ Random.generate NewId (Random.int 1000 10000)
-        , Task.succeed (AddItem "Setup & provision production server") |> Task.perform identity
-        , Task.succeed (AddItem "Setup CI") |> Task.perform identity
-        , Task.succeed (AddItem "Setup Project Skeleton") |> Task.perform identity
-        ]
-    )
+initModel : Model
+initModel =
+    { items = [], nextId = 2, hoursPerDay = 8, id = 0, notification = { type_ = Success, message = "" } }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    let
+        initData =
+            flags.initData
+    in
+        ( { initModel | items = initData.items, nextId = initData.nextId, hoursPerDay = initData.hoursPerDay, id = initData.id }
+        , if initData.id > 0 then
+            Cmd.none
+          else
+            Cmd.batch
+                [ Random.generate NewId (Random.int 1000 10000)
+                , Task.succeed (AddItem "Setup & provision production server") |> Task.perform identity
+                , Task.succeed (AddItem "Setup CI") |> Task.perform identity
+                , Task.succeed (AddItem "Setup Project Skeleton") |> Task.perform identity
+                ]
+        )
 
 
 
@@ -256,9 +272,9 @@ port saveEstimate : Json.Encode.Value -> Cmd msg
 port receiveNotification : (Json.Decode.Value -> msg) -> Sub msg
 
 
-main : Program Never Model Msg
+main : Program Flags Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { view = view
         , init = init
         , update = update
