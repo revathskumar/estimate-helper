@@ -13,3 +13,21 @@ img {
   margin: 20px 0;
   max-width: 200px;
 }
+
+.icon-font {
+  font-size: 30px;
+}
+
+.remove-icon {
+  color:red;
+  cursor: pointer;
+  margin-left: .75em;
+}
+
+.hours-input {
+  width: 69%;
+}
+
+.panel-text {
+  margin: 0 .75em;
+}
